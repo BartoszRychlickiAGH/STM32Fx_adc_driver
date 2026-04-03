@@ -1,0 +1,85 @@
+/**
+  ******************************************************************************
+  * @file    adc_utils.c
+  * @author  Bartosz Rychlicki
+  * @author  AGH Eko-Energia
+
+  * @Title   Universal driver for ADC peripheral (Built for F1, F2, F3 and F4 families, but can be implemented for all families)
+
+  * @brief   This file contains common defines, flags and macros that are used to extract ADC configuration from ADC registers
+  ******************************************************************************
+  * @attention
+  *
+  * Copyright (c) 2026 AGH Eko-Energy.
+  * All rights reserved.
+  *
+  ******************************************************************************
+  */
+
+
+#include "adc_utils.h"
+
+/* Exported variables ------------------------------------------------------------------------------------ */
+extern ADC_HandleTypeDef hadc1;
+
+/* Functions' bodies ------------------------------------------------------------------------------------ */
+
+inline uint8_t ADC_GetMode(ADC_HandleTypeDef* hadc){
+
+	// checking if hadc is a NULL to prevent launching incorrect operations
+	if(hadc == NULL){
+		return 255;
+	}
+
+	// extracting data of registers, correct for F1 family
+	#if defined(STM32F1_FAMILY)
+
+		// returning CR1 dual mode data value to local variable
+        return (uint8_t)(hadc->Instance->CR1 >> ADC_CR1_DUALMOD_Pos);
+
+	#endif
+
+    // returning incorrect value if target was not detected
+	return 255;
+}
+
+
+inline uint8_t ADC_Continuous(ADC_HandleTypeDef* hadc){
+
+	// checking if hadc is a NULL to prevent launching incorrect operations
+	if(hadc == NULL){
+		return 255;
+	}
+
+	// extracting data of registers, correct for F1 family
+	#if defined(STM32F1_FAMILY)
+
+	    // returning CR2 continuous conversion data value to local variable
+	    return (uint8_t)(hadc1.Instance->CR2 >> ADC_CR2_CONT_Pos);
+
+	#endif
+
+	 // returning incorrect value if target was not detected
+	return 255;
+}
+
+
+inline uint8_t ADC_Discontinuous(ADC_HandleTypeDef* hadc){
+
+	// checking if hadc is a NULL to prevent launching incorrect operations
+	if(hadc == NULL){
+		return 255;
+	}
+
+
+	// extracting data of registers, correct for F1 family
+	#if defined(STM32F1_FAMILY)
+
+		// returning CR1 discontinuous conversion data value to local variable
+		return (uint8_t)(hadc1.Instance->CR1 >> ADC_CR1_DISCEN_Pos);
+
+	#endif
+
+    // returning incorrect value if target was not detected
+	return 255;
+}
