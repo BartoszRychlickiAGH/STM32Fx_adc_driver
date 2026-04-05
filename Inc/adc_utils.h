@@ -33,10 +33,12 @@
 #define ADC_SQR_DATA_RES     (5)            //< Resolution of channel number in regs - generally 5 bits of data
 #define ADC_SQR_DATA_Msk     (0x1F)         //< Mask for channel number in regs - generally 4:0 bits of data so 11111
 
-#define ADC_POLLING_TIMEOUT  (500)			//< Macro stores max ADC polling timeout, to prevent endless blocking by polling
+#define ADC_POLLING_TIMEOUT  (10)			//< Macro stores max ADC polling timeout, to prevent endless blocking by polling
 
 #define STM32_VCC            (3.3f)			//< STM32 supply voltage for reading ADC's pins' voltages
 #define STM32_GND            (0.0f)         //< STM32 ground voltage for providing reference while reading ADC's pins' voltages
+
+#define ADC_CONVERTED_MEASURES (1)  		//< Macro defines amount of measures, that will be used to average value converted by ADC on exact channel
 
 
 /* Exported variables --------------------------------------------------------------------------------------- */
@@ -60,14 +62,19 @@ extern ADC_HandleTypeDef hadc1;
    0111         | Fast interleaved mode only
    1000         | Slow interleaved mode only
    1001         | Alternate trigger mode only
+
+
+ * @param hadc - pointer to ADC handle
+ * @retval binary type value similar to one of thosee, presented in table above
  */
 uint8_t ADC_GetMode(ADC_HandleTypeDef* hadc);
 
 /*
  * @ brief Function that returns binary type value of ADC Continuous conversion mode
- * @ note  Continuous conversion mode on ADC indicated if ADC re-launch after sampling sequence of all channels
+ * @ note  Continuous conversion mode on ADC indicates if ADC re-launch after sampling sequence of all channels
      or if HAL_ADC_Start should be called every time another  sampling sequence should be launched
 
+ * @param hadc - pointer to ADC handle
  * @ return value:
    - DISABLED - 0
    - ENABLED  - 1
@@ -76,15 +83,39 @@ uint8_t ADC_Continuous(ADC_HandleTypeDef* hadc);
 
 /*
  * @ brief Function that returns binary type value of ADC Discontinuous conversion mode
- * @ note  Discontinuous conversion mode on ADC indicated if ADC sample one after one channel, or all channels continuously,
- 	 	    - if DISABLED - then ADC read channel after channel with single HAL_ADC_Start call
- 	 	    - if ENABLED  - then HAL_ADC_Start should be call to change cchannel to be scanned (for example channel0 -> channel1)
+ * @ note  Discontinuous conversion mode on ADC indicates how many channels does ADC scan during single launch by HAL_ADC_Start
 
+ * @param hadc - pointer to ADC handle
  * @ return value:
    - DISABLED - 0
    - ENABLED  - 1
  */
 uint8_t ADC_Discontinuous(ADC_HandleTypeDef* hadc);
 
+/*
+ * @ brief Function that returns binary type value of DMA status for given ADC
+ * @ note  Function returns uint8_t, but its logic returns ENABLE or DISABLE as far as mentiooned states are 0 or 1, then uint8_t provides correct casting
+
+ * @param hadc - pointer to ADC handle
+ * @ return value:
+   - DISABLED - 0
+   - ENABLED  - 1
+ */
+uint8_t ADC_DMA_ENABLED(ADC_HandleTypeDef* hadc);
+
+/*
+ * @ brief Function that returns binary type value of ADC's Resolution
+ * @ note  Function returns uint16_t, because 12-bit resolution cannot be written on data types, like int8_t, etc.
+
+ * @param hadc - pointer to ADC handle
+ * @ return value:
+   - 4095 - 12 Bits Resolution
+   - 1023 - 10 Bits Resolution
+   - 255  - 8  Bits Resolution
+   - 63   - 6  Bits Reseolution
+   - 15   - 4  Bits Reseolution
+
+ */
+uint16_t ADC_Resolution(ADC_HandleTypeDef* hadc);
 
 #endif /* ADC_UTILS_H_ */

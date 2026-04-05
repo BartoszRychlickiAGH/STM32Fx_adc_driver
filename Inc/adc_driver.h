@@ -29,6 +29,7 @@ extern "C" {
 /* Includes  ---------------------------------------------------------------------------------------------------------- */
 #include <stdint.h>
 #include "adc_utils.h"
+#include "adc_conf.h"
 
 
 /* Typedefs and structures -------------------------------------------------------------------------------------------- */
@@ -46,9 +47,8 @@ typedef struct{
 /* Private constant macros -------------------------------------------------------------------------------------------- */
 
 
-#define ADC_RESOLUTION 		   (4095)
-#define ADC_CONVERTED_MEASURES (1)  										//< Macro defines amount of measures, that will be used to average value converted by ADC on exact channel
-#define ADC_BUFFER_SIZE 	   (ADC_USED_CHANNELS * ADC_CONVERTED_MEASURES) //< Macro stores data buffer length
+#define ADC1_BUFFER_SIZE 	   (ADC1_USED_CHANNELS * ADC_CONVERTED_MEASURES) //< Macro stores data buffer length
+#define ADC2_BUFFER_SIZE 	   (ADC1_USED_CHANNELS * ADC_CONVERTED_MEASURES) //< Macro stores data buffer length
 
 
 /* Functions' prototypes ------------------------------------------------------------------------------------ */
@@ -69,7 +69,7 @@ HAL_StatusTypeDef ADC_Init(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTypeDefs* 
  * @param  *retval - pointer to value, which stores converted value
  * @retval status of HAL's operation
  */
-HAL_StatusTypeDef ADC_ReadChannel(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTypeDefs* cadc, uint8_t* channel, uint16_t* retval);
+HAL_StatusTypeDef ADC_ReadChannel(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTypeDefs* cadc, uint8_t channel, uint16_t* retval);
 
 
 /*
@@ -79,7 +79,7 @@ HAL_StatusTypeDef ADC_ReadChannel(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTyp
  * @param  rank     - pointer to conversion channel, which value is going to be read
  * @param  *retval  - pointer to variable that will store pin voltage for future operations
  */
-HAL_StatusTypeDef ADC_Get_PinVoltage(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTypeDefs* cadc, uint8_t* channel, float* retval);
+HAL_StatusTypeDef ADC_Get_PinVoltage(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTypeDefs* cadc, uint8_t channel, float* retval);
 
 /*
  * @brief  Function extracts information about channels configuration from ADC registers - it simply read channel number for each rank and amout of channels in use
@@ -96,7 +96,7 @@ HAL_StatusTypeDef ADC_Get_ChannelsConfiguration(ADC_HandleTypeDef* hadc, ADC_Cha
  * @param rank 	    - pointer to rank, which value will be overwritten with rank number for given channel
  * @retval          - HAL_StatusTypeDef status of operation
  */
-HAL_StatusTypeDef ADC_Get_ChannelRank(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTypeDefs* cadc, uint8_t* channel, uint8_t* rank);
+HAL_StatusTypeDef ADC_Get_ChannelRank(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTypeDefs* cadc, uint8_t channel, uint8_t* rank);
 
 
 #ifdef __cplusplus

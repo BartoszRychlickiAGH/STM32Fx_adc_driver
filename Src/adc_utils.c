@@ -28,7 +28,7 @@ inline uint8_t ADC_GetMode(ADC_HandleTypeDef* hadc){
 
 	// checking if hadc is a NULL to prevent launching incorrect operations
 	if(hadc == NULL){
-		return 255;
+		return 0xFF;
 	}
 
 	// extracting data of registers, correct for F1 family
@@ -40,7 +40,7 @@ inline uint8_t ADC_GetMode(ADC_HandleTypeDef* hadc){
 	#endif
 
     // returning incorrect value if target was not detected
-	return 255;
+	return 0xFF;
 }
 
 
@@ -48,38 +48,73 @@ inline uint8_t ADC_Continuous(ADC_HandleTypeDef* hadc){
 
 	// checking if hadc is a NULL to prevent launching incorrect operations
 	if(hadc == NULL){
-		return 255;
+		return 0xFF;
 	}
 
 	// extracting data of registers, correct for F1 family
 	#if defined(STM32F1_FAMILY)
 
 	    // returning CR2 continuous conversion data value to local variable
-	    return (uint8_t)(hadc1.Instance->CR2 >> ADC_CR2_CONT_Pos);
+	    return (uint8_t)((hadc1.Instance->CR2 >> ADC_CR2_CONT_Pos) & 0x1);
 
 	#endif
 
 	 // returning incorrect value if target was not detected
-	return 255;
+	return 0xFF;
 }
-
 
 inline uint8_t ADC_Discontinuous(ADC_HandleTypeDef* hadc){
 
 	// checking if hadc is a NULL to prevent launching incorrect operations
 	if(hadc == NULL){
-		return 255;
+		return 0xFF;
 	}
-
 
 	// extracting data of registers, correct for F1 family
 	#if defined(STM32F1_FAMILY)
 
-		// returning CR1 discontinuous conversion data value to local variable
-		return (uint8_t)(hadc1.Instance->CR1 >> ADC_CR1_DISCEN_Pos);
+	    // returning CR2 continuous conversion data value to local variable
+	    return (uint8_t)((hadc1.Instance->CR1 >> ADC_CR1_DISCEN_Pos) & 0x1);
 
 	#endif
 
-    // returning incorrect value if target was not detected
-	return 255;
+	// returning incorrect value if target was not detected
+	return 0xFF;
+
 }
+
+
+inline uint8_t ADC_DMA_ENABLED(ADC_HandleTypeDef* hadc){
+
+	// Checking if correct pointer was passed
+	if(hadc == NULL){
+		return 0xFF;
+	}
+
+    #if defined(STM32F1_FAMILY)
+        return (hadc1.DMA_Handle == NULL) ? DISABLE : ENABLE;
+    #endif
+
+    // error state
+    return 0xFF;
+}
+
+inline uint16_t ADC_Resolution(ADC_HandleTypeDef* hadc){
+
+   // checking if correct pointer was given
+   if(hadc == NULL){
+	   return 0xFFFF;
+   }
+
+   // executing command for F1 family
+   #if defined(STM32F1_FAMILY)
+
+       // because F1 MCUs does not have settings to change their resolution, they have constant value 4095 of resolution
+       return (4095);
+
+   #endif
+
+
+  return 0xFFFF;
+}
+

@@ -1,26 +1,37 @@
-/*
- * adc_driver_ut.c
- *
- *  Created on: Mar 19, 2026
- *      Author: brych
- */
+/**
+  ******************************************************************************
+  * @file      adc_ut.c
+  * @author    Bartosz Rychlicki
+  * @author    AGH Eko-Energia
+  * @Title     Tests Suites for ADC Driver
+  * @brief     File contains tests suites for common modes of ADC and specific data flow with mixed configuration og ADC flags
+  ******************************************************************************
+  * @attention Error codes are called when exact incorrect use of function is made
+  *
+  * Copyright (c) 2026 AGH Eko-Energy.
+  * All rights reserved.
+  *
+  ******************************************************************************
+  */
 
 #include "adc_driver.h"
 #include "CUnit/Basic.h"
 #include "adc.h"
 #include "stdio.h"
 #include "adc_utils.h"
+#include "main.h"
 
-extern ADC_HandleTypeDef hadc1;
+
+#if defined(STM32F1_FAMILY)
+
+    extern ADC_HandleTypeDef hadc1;
+
+#elif defined(STM32F3_FAMILY)
+    extern ADC_HandleTypeDef hadc2;
+#endif
+
 ADC_ChannelsConfigTypeDefs ut_cadc;
-uint8_t channel0 = 0, channel1 = 1;
 
-/*
-==============================================================================
-                        ##### Tests for ADC Drive features #####
-==============================================================================
-
- */
 
 
 /*
@@ -28,144 +39,188 @@ uint8_t channel0 = 0, channel1 = 1;
   ==============================================================================
 */
 
-void TEST_ADCDriver_Initialization(void){
-
-	HAL_StatusTypeDef status = ADC_Init(&hadc1, &ut_cadc);
-
-	CU_ASSERT_EQUAL(status, HAL_OK);
-}
-
-
 void TEST_ADCDriver_ChannelsConfiguration(void){
 
-	uint8_t rank1, rank2;
+	uint8_t channel0Index = 0, channel1Index = 1, channel4Index = 4;
+	uint8_t rank1, rank2, rank3;
 
+	#if defined(STM32F1_FAMILY)
+		ADC_Init(&hadc1, &ut_cadc);
 
-	HAL_StatusTypeDef status = ADC_Get_ChannelsConfiguration(&hadc1, &ut_cadc);
+		HAL_StatusTypeDef status = ADC_Get_ChannelsConfiguration(&hadc1, &ut_cadc);
 
-	CU_ASSERT_EQUAL(ut_cadc.ranks[0], 0);
-	CU_ASSERT_EQUAL(ut_cadc.ranks[1], 1);
+		CU_ASSERT_EQUAL(ut_cadc.ranks[0], 0);
+		CU_ASSERT_EQUAL(ut_cadc.ranks[1], 1);
+		CU_ASSERT_EQUAL(ut_cadc.ranks[2], 4);
 
-	CU_ASSERT_EQUAL(status, HAL_OK);
-
-	status = ADC_Get_ChannelRank(&hadc1, &ut_cadc, &channel0, &rank1);
-
-	CU_ASSERT_EQUAL(rank1, 0);
-
-	status = ADC_Get_ChannelRank(&hadc1, &ut_cadc, &channel1, &rank2);
-
-	CU_ASSERT_EQUAL(rank2, 1);
-
-}
-
-/*
-                      ##### Non-Continuous, Independent, No DMA #####
-  ==============================================================================
- */
-
-void TEST_ADC_Init_Independent_NoContinous_NoDiscontinuous_NoDMA(void){
-
-	// checking ADC mode
-	CU_ASSERT_EQUAL(ADC_GetMode(&hadc1), ADC_MODE_INDEPENDENT);
-
-	// checking Conversion type - if ADC needs to be launched after scanning
-	CU_ASSERT_EQUAL(ADC_Continuous(&hadc1), DISABLE);
-
-	// checking if scanning while calling HAL_ADC is associated with single channel
-	CU_ASSERT_EQUAL(ADC_Discontinuous(&hadc1), DISABLE);
-
-	// checking if DMA instance was assigned
-	CU_ASSERT_PTR_NULL(hadc1.DMA_Handle);
-
-
-}
-
-void TEST_ADC_ReadChannel_Independent_NoContinous_NoDiscontinuous_NoDMA_Channel0(void){
-
-
-	// declaration of variable to store sampled value in ut
-	uint16_t testBinaryValue = 0;
-
-	// assigning return status by function: ADC_ReadChannel
-	HAL_StatusTypeDef status = ADC_ReadChannel(&hadc1, &ut_cadc, &channel0, &testBinaryValue);
-
-	// checking of status returned by ADC_ReadChannel is correct
-	CU_ASSERT_EQUAL(status, HAL_OK);
-
-	// checking if sampled value is near 5, because selected channel is wired to GND but fluctuances of sampled values can wrongly indicate that sampled value is not 0
-	CU_ASSERT_TRUE(testBinaryValue >= 4000);
-
-}
-
-void TEST_ADC_ReadChannel_Independent_NoContinous_NoDiscontinuous_NoDMA_Channel1(void){
-
-
-	// declaration of variable to store sampled value in ut
-	uint16_t testBinaryValue = 0;
-
-	// assigning return status by function: ADC_ReadChannel
-	HAL_StatusTypeDef status = ADC_ReadChannel(&hadc1, &ut_cadc, &channel1, &testBinaryValue);
-
-	// checking of status returned by ADC_ReadChannel is correct
-	CU_ASSERT_EQUAL(status, HAL_OK);
-
-	// checking if sampled value is near 5, because selected channel is wired to GND but fluctuances of sampled values can wrongly indicate that sampled value is not 0
-	CU_ASSERT_TRUE(testBinaryValue <= 100 );
-
-
-}
-
-void TEST_ADC_GetValue_Independent_NoContinous_NoDiscontinuous_NoDMA_Channel0(void){
-
-	// Declaration of target value and retval, where their values will be compared
-	float targetValue = 3.3f;
-	float testVoltage = 0;
-
-	// declaration of tolerance for measured voltage
-	float tolerance = 0.01f;
-
-	// reading status of ADC_ReadPinVoltage
-	HAL_StatusTypeDef status = ADC_Get_PinVoltage(&hadc1, &ut_cadc, &channel0, &testVoltage);
-
-	// assertion for returned by ADC_getVoltagePin status
-	CU_ASSERT_EQUAL(status, HAL_OK);
-
-	// assertion for GND value for channel wired to GND of PCB
-	CU_ASSERT_DOUBLE_EQUAL(targetValue, testVoltage, tolerance);
-}
-
-void TEST_ADC_GetValue_Independent_NoContinous_NoDiscontinuous_NoDMA_Channel1(void){
-
-	// Declaration of target value and retval, where their values will be compared
-		float targetValue = 0.0f;
-		float testVoltage = 0.0f;
-
-		// declaration of tolerance for measured voltage
-		float tolerance = 0.01f;
-
-
-		// reading status of ADC_ReadPinVoltage
-		HAL_StatusTypeDef status = ADC_Get_PinVoltage(&hadc1, &ut_cadc, &channel1, &testVoltage);
-
-		// assertion for returned by ADC_getVoltagePin status
 		CU_ASSERT_EQUAL(status, HAL_OK);
 
-		// assertion for GND value for channel wired to GND of PCB
-		CU_ASSERT_DOUBLE_EQUAL(targetValue, testVoltage, tolerance);
+		status = ADC_Get_ChannelRank(&hadc1, &ut_cadc, channel0Index, &rank1);
 
+		CU_ASSERT_EQUAL(status, HAL_OK);
+		CU_ASSERT_EQUAL(rank1, 0);
+
+		status = ADC_Get_ChannelRank(&hadc1, &ut_cadc, channel1Index, &rank2);
+
+		CU_ASSERT_EQUAL(status, HAL_OK);
+		CU_ASSERT_EQUAL(rank2, 1);
+
+		status = ADC_Get_ChannelRank(&hadc1, &ut_cadc, channel4Index, &rank3);
+
+		CU_ASSERT_EQUAL(status, HAL_OK);
+		CU_ASSERT_EQUAL(rank3, 2);
+
+	#elif defined (STM32F3_FAMILY)
+		ADC_Init(&hadc2, &ut_cadc);
+
+		HAL_StatusTypeDef status = ADC_Get_ChannelsConfiguration(&hadc2, &ut_cadc);
+
+		CU_ASSERT_EQUAL(ut_cadc.ranks[0], 0);
+		CU_ASSERT_EQUAL(ut_cadc.ranks[1], 1);
+		CU_ASSERT_EQUAL(ut_cadc.ranks[2], 4);
+
+		CU_ASSERT_EQUAL(status, HAL_OK);
+
+		status = ADC_Get_ChannelRank(&hadc2, &ut_cadc, channel0Index, &rank1);
+
+		CU_ASSERT_EQUAL(status, HAL_OK);
+		CU_ASSERT_EQUAL(rank1, 0);
+
+		status = ADC_Get_ChannelRank(&hadc2, &ut_cadc, channel1Index, &rank2);
+
+		CU_ASSERT_EQUAL(status, HAL_OK);
+		CU_ASSERT_EQUAL(rank2, 1);
+
+		status = ADC_Get_ChannelRank(&hadc2, &ut_cadc, channel4Index, &rank3);
+
+		CU_ASSERT_EQUAL(status, HAL_OK);
+		CU_ASSERT_EQUAL(rank3, 2);
+
+	#endif
+}
+/*
+                      ##### ADC Driver's No DMA Support Conversion tests - ADC in independent mode#####
+  ==============================================================================
+
+*/
+void TEST_ADC_Init_NoDMA_Independent_Continuous(void){
+
+	// Tests associated with Init
+
+	#if defined(STM32F1_FAMILY)
+
+
+		HAL_StatusTypeDef status = ADC_Init(&hadc1, &ut_cadc);
+
+		CU_ASSERT_EQUAL(HAL_OK, status);
+
+		CU_ASSERT_EQUAL(ADC_Resolution(&hadc1), 4095);
+
+		CU_ASSERT_EQUAL(ADC_Continuous(&hadc1), DISABLE);
+
+		CU_ASSERT_EQUAL(ADC_Discontinuous(&hadc1), ENABLE);
+
+		CU_ASSERT_PTR_NULL(hadc1.DMA_Handle);
+
+		CU_ASSERT_EQUAL(ADC_GetMode(&hadc1), ADC_MODE_INDEPENDENT);
+
+	#elif defined(STM32F3_FAMILY)
+
+		HAL_StatusTypeDef status = ADC_Init(&hadc2, &ut_cadc);
+
+		CU_ASSERT_EQUAL(HAL_OK, status);
+
+		CU_ASSERT_EQUAL(ADC_Resolution(&hadc2), 4095);
+
+		CU_ASSERT_EQUAL(ADC_Continuous(&hadc2), DISABLE);
+
+		CU_ASSERT_EQUAL(ADC_Discontinuous(&hadc2), ENABLE);
+
+		CU_ASSERT_PTR_NULL(hadc2.DMA_Handle);
+
+		CU_ASSERT_EQUAL(ADC_GetMode(&hadc2), ADC_MODE_INDEPENDENT);
+
+
+	#endif
+
+}
+
+void TEST_ADC_ReadChannel_0_NoDMA_Independent_Continuous(void){
+
+     uint8_t  channelIndex = 0;
+     uint16_t channelValue = 0;
+
+
+	#if  defined(STM32F1_FAMILY)
+
+		 HAL_StatusTypeDef status = ADC_ReadChannel(&hadc1, &ut_cadc, channelIndex, &channelValue);
+
+	#elif defined(STM32F3_FAMILY)
+
+		 HAL_StatusTypeDef status = ADC_ReadChannel(&hadc2, &ut_cadc, channelIndex, &channelValue);
+
+	#endif
+
+
+     CU_ASSERT_EQUAL(HAL_OK, status);
+
+     CU_ASSERT(channelValue >= 4000);
+}
+
+void TEST_ADC_ReadChannel_1_NoDMA_Independent_Continuous(void){
+
+     uint8_t  channelIndex = 1;
+     uint16_t channelValue = 0;
+
+
+	#if  defined(STM32F1_FAMILY)
+
+		 HAL_StatusTypeDef status = ADC_ReadChannel(&hadc1, &ut_cadc, channelIndex, &channelValue);
+
+	#elif defined(STM32F3_FAMILY)
+
+		 HAL_StatusTypeDef status = ADC_ReadChannel(&hadc2, &ut_cadc, channelIndex, &channelValue);
+
+	#endif
+
+
+     CU_ASSERT_EQUAL(HAL_OK, status);
+
+     CU_ASSERT(channelValue > 2800 && channelValue < 3000);
+}
+
+void TEST_ADC_ReadChannel_4_NoDMA_Independent_Continuous(void){
+
+     uint8_t  channelIndex = 4;
+     uint16_t channelValue = 0;
+
+
+#if  defined(STM32F1_FAMILY)
+
+     HAL_StatusTypeDef status = ADC_ReadChannel(&hadc1, &ut_cadc, channelIndex, &channelValue);
+
+#elif defined(STM32F3_FAMILY)
+
+     HAL_StatusTypeDef status = ADC_ReadChannel(&hadc2, &ut_cadc, channelIndex, &channelValue);
+
+#endif
+
+
+     CU_ASSERT_EQUAL(HAL_OK, status);
+
+     CU_ASSERT(channelValue < 20);
 }
 
 /*
                       ##### ADC Driver's Unit Tests entry point #####
   ==============================================================================
 
- */
+*/
 void ADCDriver_Ut_main(void){
 
 	// initialize CUnit test suit
-	CU_pSuite readChannelSuite; 		 // tests suite for Continuous = DISABLED, No DMA, Discontinuous = DISBLED, Independent
-	CU_pSuite getPinVoltageSuite;
-	CU_pSuite generalFunctionsTestSuite; // tests suite for general ADC Driver functionalities
+	CU_pSuite generalSuite; 		 // init tests suite for Continuous = DISABLED, No DMA, Discontinuous = DISBLED, Independent
+    CU_pSuite noDMASuite;            // test suite for ADC without DMA, independent
 
 	// Creating tests db
 	CU_initialize_registry();
@@ -175,25 +230,17 @@ void ADCDriver_Ut_main(void){
 	/*
 	 * Tests for general ADC Driver functionalities
 	 */
-	generalFunctionsTestSuite = CU_add_suite("ADC general functionalities test suite", NULL, NULL);
-	CU_add_test(generalFunctionsTestSuite, "ADC initialization tests", TEST_ADCDriver_Initialization);
-	CU_add_test(generalFunctionsTestSuite, "Channels configuration tests", TEST_ADCDriver_ChannelsConfiguration);
-
+	generalSuite = CU_add_suite("ADC Common Init Test Suite", NULL, NULL);
+	CU_add_test(generalSuite, "Channels Config Test", TEST_ADCDriver_ChannelsConfiguration);
 
 	/*
-	 * Tests for Continuous = DISABLED, No DMA, Discontinuous = DISBLED, Independent - Read Channel
+	 * Tests for ADC Driver functionalities in No DMA support - independent mode of ADC, Conversion is not Continuous
 	 */
-	readChannelSuite = CU_add_suite("[Read Channel] ADC DISCONTINUOUS = DISABLED, CONTINUOUS = DISABLED, No DMA and independent mode", NULL, NULL);
-	CU_add_test(readChannelSuite, "Channel 0 test", TEST_ADC_ReadChannel_Independent_NoContinous_NoDiscontinuous_NoDMA_Channel0);
-	//CU_add_test(readChannelSuite, "Channel 1 test", TEST_ADC_ReadChannel_Independent_NoContinous_NoDiscontinuous_NoDMA_Channel1);
-
-
-	/*
-	 * Tests for Continuous = DISABLED, No DMA, Discontinuous = DISBLED, Independent - Get Pin Voltage
-	 */
-	getPinVoltageSuite = CU_add_suite("[Get Pin Voltage] ADC DISCONTINUOUS = DISABLED, CONTINUOUS = DISABLED, No DMA and independent mode", NULL, NULL);
-	CU_add_test(getPinVoltageSuite, "Channel 0 test", TEST_ADC_GetValue_Independent_NoContinous_NoDiscontinuous_NoDMA_Channel0);
-	CU_add_test(getPinVoltageSuite, "Channel 1 test", TEST_ADC_GetValue_Independent_NoContinous_NoDiscontinuous_NoDMA_Channel1);
+     noDMASuite = CU_add_suite("Test suite for ADC in not continuous conversion mode, without DMA usage and in indepenDent mode", NULL, NULL);
+     CU_add_test(noDMASuite, "Init test", TEST_ADC_Init_NoDMA_Independent_Continuous);
+     CU_add_test(noDMASuite, "Reading channel 0 test", TEST_ADC_ReadChannel_0_NoDMA_Independent_Continuous);
+     CU_add_test(noDMASuite, "Reading channel 1 test", TEST_ADC_ReadChannel_1_NoDMA_Independent_Continuous);
+     CU_add_test(noDMASuite, "Reading channel 4 test", TEST_ADC_ReadChannel_4_NoDMA_Independent_Continuous);
 
 
 

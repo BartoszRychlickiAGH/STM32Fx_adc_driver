@@ -8,7 +8,7 @@
   ******************************************************************************
   * @attention Error codes are called when exact incorrect use of function is made
   *
-  * Copyright (c) 2025 AGH Eko-Energy.
+  * Copyright (c) 2026 AGH Eko-Energy.
   * All rights reserved.
   *
   ******************************************************************************
@@ -22,72 +22,64 @@
 
 /* Functions' bodies ------------------------------------------------------------------------------------ */
 
-/*
- * @brief Function executes initialize ADC for Continuous flag = DISABLED, Discontinuous flag = DISABLED, No DMA support, ADC in independent mode
- */
-static HAL_StatusTypeDef ADC_Init_NoDMA_Independent_Discontinuous(ADC_HandleTypeDef* hadc){
+static HAL_StatusTypeDef ADC_Init_NoDMA_Independent(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTypeDefs* cadc){
 
-	// checking if user gave null pointers
-	if(NULL == hadc){
-		return HAL_ERROR;
+
+    // Checking of correct number of discontinuous conversion is set
+	if(hadc->Init.NbrOfDiscConversion == 1){
+		return HAL_OK;
 	}
 
-
-	// ADC currently started
-
-	return HAL_OK;
+	return HAL_ERROR;
 }
 
 
-/*
- * @brief Function executes read channel command for Continuous flag = DISABLED, Discontinuous flag = DISABLED, No DMA support, ADC in independent mode
- */
-static HAL_StatusTypeDef ADC_ReadChannel_NoDMA_Independent_Discontinuous(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTypeDefs* cadc, uint8_t rank, uint16_t* retval){
 
-	// declaration of variable, which is in charge of storing sampled value from ADC pin
-	uint16_t binaryType = 0;
+static HAL_StatusTypeDef ADC_ReadChannel_NoDMA_Independent(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTypeDefs* cadc, uint8_t* rank, uint16_t* retval){
 
+	// Declaration of variable which will temporarily store sampled value
+	uint16_t tempValue = 0, endValue = 0;
 
-	// starting ADC every polling launch
-	if(HAL_ADC_Start(hadc) != HAL_OK){
-		return HAL_ERROR;
-	}
+    // iterating through all ranks
+    for(uint8_t i = 0; i < cadc->numberOfSelectedChannels; ++i){
 
-	// iterating to correct rank number and providing for polling through all channels, to reset reading sequence
-	for(uint8_t i = 0; i < cadc->numberOfSelectedChannels; ++i){
+    	// Starting sequencer for ADC
+    	if(HAL_ADC_Start(hadc) != HAL_OK){
+    	    return HAL_ERROR;
+    	}
 
+    	// Starting polling
+    	if(HAL_ADC_PollForConversion(hadc, ADC_POLLING_TIMEOUT) == HAL_OK){
 
-		// declaration of temporary variable to store sampled value from ADC
-		uint16_t tempSampledValue = 0;
+    		// reading value to temporary variable
+            tempValue = HAL_ADC_GetValue(hadc);
 
+    		// checking if current iteration is co-related to rank for given channel
+            if(*rank == i){
 
-		// launching polling to read sampled value
-		if(HAL_ADC_PollForConversion(hadc, ADC_POLLING_TIMEOUT) != HAL_OK){
-			return HAL_ERROR;
-		}
+            	// assigning to end value of sampled ADC value
+            	endValue = tempValue;
+            }
+    	}
 
+    }
 
-		// using scopes for providing optimized memory usage, and reading sampled value
-		tempSampledValue = (uint16_t)HAL_ADC_GetValue(hadc);
+    // Stopping ADC to reset sequencer
+    if(HAL_ADC_Stop(hadc) != HAL_OK){
+    	return HAL_ERROR;
+    }
 
+    // checking if end value is valid
+    if(endValue >= 0 && endValue <= ADC_Resolution(hadc)){
 
-		{
-			// checking if current iteration is associated with reading selected channel
-			if(i == rank){
+    	*retval = endValue;
 
-				// assigning sampled value if current iteration is associated with reading selected channel's value
-				binaryType = tempSampledValue;
-			}
-		}
+    	// returning OK status
+        return HAL_OK;
+    }
 
-	}
-
-	// assigning extracted value to retval
-	*retval = binaryType;
-
-
-
-	return HAL_OK;
+    // returning Error status when sampled value is not in safe bounds
+    return HAL_ERROR;
 }
 
 
@@ -163,88 +155,98 @@ HAL_StatusTypeDef ADC_Init(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTypeDefs* 
 		return HAL_ERROR;
 	}
 
-
-	// Initializing ADC
-	if(HAL_ADC_Init(hadc) != HAL_OK){
-		return HAL_ERROR;
-	}
-
 	// Initializing channels configuration operation
 	if(ADC_Get_ChannelsConfiguration(hadc, cadc) != HAL_OK){
 		return HAL_ERROR;
 	}
 
-	// start ADC's conversion in independent/no DMA/discontinuous mode
-	if(ADC_Init_NoDMA_Independent_Discontinuous(hadc) != HAL_OK){
-		return HAL_ERROR;
+
+	// Init ADC for correct work mode
+	if(ADC_Discontinuous(hadc) == ENABLE){
+
+		// Checking if User made correct config in .ioc file
+		if(ADC_Init_NoDMA_Independent(hadc, cadc) != HAL_OK){
+			return HAL_ERROR;
+		}
 	}
+
 
 	// Enabling clock for ADC1
 	__HAL_RCC_ADC1_CLK_ENABLE();
-
 
 	return HAL_OK;
 }
 
 
-HAL_StatusTypeDef ADC_ReadChannel(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTypeDefs* cadc, uint8_t* channel, uint16_t* retval){
+HAL_StatusTypeDef ADC_ReadChannel(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTypeDefs* cadc, uint8_t channel, uint16_t* retval){
 
 	if(hadc == NULL || retval == NULL){
 		return HAL_ERROR;
 	}
 
-	// rank for given channel
+    // Declaration of rank for given channel
 	uint8_t rank = 0;
 
-	// getting rank for given channel
+	// Reading rank
 	if(ADC_Get_ChannelRank(hadc, cadc, channel, &rank) != HAL_OK){
 		return HAL_ERROR;
 	}
 
-	// Because driver supports independent conversion mode without DMA support for ADC in independent mode only function beloww is called
-	if(ADC_ReadChannel_NoDMA_Independent_Discontinuous(hadc, cadc, rank, retval) != HAL_OK){
+	// Checking of firmware correctly sensed rank for passed channel | value can be set to one of values from [0, 15]
+	if(rank >= 16){
 		return HAL_ERROR;
 	}
+
+	// Executing reading, with calling correct to .ioc config, private function
+    if(DISABLE == ADC_DMA_ENABLED(hadc)){
+
+    	// Executing reading channel for mode without DMA
+    	if(ADC_Discontinuous(hadc) == ENABLE){
+
+    		if(ADC_ReadChannel_NoDMA_Independent(hadc, cadc, &rank, retval) != HAL_OK){
+    			return HAL_ERROR;
+    		}
+        // Driver does not support different reading mode without DMA usage, so it returns error
+    	}else{
+
+    		return HAL_ERROR;
+
+    	}
+    }else{
+
+    	// For now return error status, cause there is no implementation for reading with DMA support
+        return HAL_ERROR;
+    }
+
+
 
 	return HAL_OK;
 }
 
-HAL_StatusTypeDef ADC_Get_PinVoltage(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTypeDefs* cadc, uint8_t* channel, float* retval){
+HAL_StatusTypeDef ADC_Get_PinVoltage(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTypeDefs* cadc, uint8_t channel, float* retval){
 
 	// checking if user gave null pointers
 	if(NULL == hadc || NULL == retval){
 		return HAL_ERROR;
 	}
 
-	// declaration of variables which will store end value of pin's voltage and sampled value from ADC's channel
-	float pinVoltage = 0;
-	uint16_t binaryType = 0;
 
-	// reading sampled value from channel
-	if(ADC_ReadChannel(hadc, cadc, channel, &binaryType) != HAL_OK){
-		return HAL_ERROR;
-	}
 
-	// calculating voltage on pin, assigned to channel
-	pinVoltage = (float)binaryType / (float)ADC_RESOLUTION * STM32_VCC;
-
-	// assigning voltage value to retval
-	*retval = pinVoltage;
-
-	return HAL_OK;
+	return HAL_ERROR;
 }
 
 
-HAL_StatusTypeDef ADC_Get_ChannelRank(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTypeDefs* cadc, uint8_t* channel, uint8_t* rank){
+HAL_StatusTypeDef ADC_Get_ChannelRank(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTypeDefs* cadc, uint8_t channel, uint8_t* rank){
 
 	// checking if user gave NULL pointers
-	if(NULL == channel || NULL == rank){
-		return HAL_ERROR;
+	if(NULL == rank){
+	    	return HAL_ERROR;
+
 	}
 
 	// iterating through table of channels in cadc
 	for(uint8_t i = 0; i < cadc->numberOfSelectedChannels; ++i){
-		if(*channel == cadc->ranks[i]){
+		if(channel == cadc->ranks[i]){
 
 			// overwriting parameter's value - rank - with i value, rank to which channel is assigned
 			*rank = i;
