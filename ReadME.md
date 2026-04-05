@@ -1,4 +1,4 @@
-# STM32 Peripheral ADC Driver — PCBCells Project
+# STM32 Peripheral ADC Driver
 
 ## Title
 **STM32 Peripheral ADC Driver (TDD Implementation)**
