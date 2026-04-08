@@ -93,7 +93,7 @@ HAL_StatusTypeDef ADC_Get_ChannelsConfiguration(ADC_HandleTypeDef* hadc, ADC_Cha
  * @brief  Function extracts information about channels configuration from ADC registers - it simply read channel number for each rank and amout of channels in use
  * @param  hadc     - handle to ADC instance
  * @param  channel  - number of channel, which rank number will be returned
- * @param rank 	    - pointer to rank, which value will be overwritten with rank number for given channel
+ * @param  rank 	- pointer to rank, which value will be overwritten with rank number for given channel (Pay attention - rank should be passed from [0:N-1] to ensure, because indexes in C starts from 0 (not 1))
  * @retval          - HAL_StatusTypeDef status of operation
  */
 HAL_StatusTypeDef ADC_Get_ChannelRank(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTypeDefs* cadc, uint8_t channel, uint8_t* rank);

@@ -39,6 +39,9 @@ The project architecture is divided into modules to ensure a transparent flow an
 ---
 
 ## Application
+In `.ioc` file, in section for `ADC`, please make sure that `DISCONTINUOUS` flag is set to `ENABLED`. Also ensure that `Number of DIscontinuous Conversion` is set to `1`.
+While working wwith multiple channels, ensures correct `Number of Conversion`, which value should be equal to currently set channels. `.ioc file` whill automatically increase `number of ranks` - make sure, that every rank is assigned to `different channel`. 
+
 To ensure stable operation and prevent `HardFault` errors, please call the **Init** function before working with the ADC. If Dual Mode is required, call the `Init_Multimode` function within the ADC Slave initialization (MX_ADC_Init).
 
 ## Manual

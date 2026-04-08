@@ -19,7 +19,6 @@
 #include "adc_driver.h"
 
 
-
 /* Functions' bodies ------------------------------------------------------------------------------------ */
 
 static HAL_StatusTypeDef ADC_Init_NoDMA_Independent(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTypeDefs* cadc){
@@ -89,15 +88,16 @@ static HAL_StatusTypeDef ADC_ReadChannel_NoDMA_Independent(ADC_HandleTypeDef* ha
 static HAL_StatusTypeDef ADC_ChannelsNumberConfig(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTypeDefs* cadc){
 
 	// Implementation for F1 family
-    #if defined(STM32F1_FAMILY)
+    #if defined(STM32F1_FAMILY) || defined(STM32F3_FAMILY)
 
         // reading number of channels in used from SQR1
-	    cadc->numberOfSelectedChannels = ((hadc->Instance->SQR1 >> ADC_SQR1_L_Pos) & 0xFF) + 1;
+	    cadc->numberOfSelectedChannels = (((hadc->Instance->SQR1 >> ADC_SQR1_L_Pos) & 0xF) + 1);
 
 	    // if read number of selected channels in not 0, then return OK status
 	    if(cadc->numberOfSelectedChannels != 0){
 	    	return HAL_OK;
 	    }
+
 
     #endif
 
@@ -142,10 +142,46 @@ static HAL_StatusTypeDef ADC_ChannelsConfig(ADC_HandleTypeDef* hadc, ADC_Channel
 
 	    }
 
+	    // returning OK status
+	    return HAL_OK;
+
+    #elif defined(STM32F3_FAMILY)
+
+	    for(uint8_t i = 0; i < cadc->numberOfSelectedChannels; ++i){
+
+	    	// reading channels from SQR1
+            if(i < ADC_SQR1_2_OFFSET){
+
+            	cadc->ranks[i] = (uint8_t)((hadc->Instance->SQR1 >> ((i + ADC_SQR1_L_OFFSET) * ADC_SQR_DATA_RES)) & ADC_SQR_DATA_Msk);
+
+            }
+            // Reading SQR2
+            else if(i < ADC_SQR1_3_OFFSET){
+
+            	cadc->ranks[i] = (uint8_t)((hadc->Instance->SQR2 >> ((i - ADC_SQR1_2_OFFSET) * ADC_SQR_DATA_RES)) & ADC_SQR_DATA_Msk);
+
+            }
+            // Reading SQR3
+            else if(i < ADC_SQR1_4_OFFSET){
+
+            	cadc->ranks[i] = ((hadc->Instance->SQR3 >> ((i - ADC_SQR1_3_OFFSET) * ADC_SQR_DATA_RES)) & ADC_SQR_DATA_Msk);
+
+            }
+            // Reading SQR4
+            else{
+
+                cadc->ranks[i] = ((hadc->Instance->SQR4 >> ((i - ADC_SQR1_4_OFFSET) * ADC_SQR_DATA_RES)) & ADC_SQR_DATA_Msk);
+
+            }
+
+		}
+
+        // returning OK status
+	    return HAL_OK;
     #endif
 
     // returning OK status
-	return HAL_OK;
+	return HAL_ERROR;
 }
 
 HAL_StatusTypeDef ADC_Init(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTypeDefs* cadc){

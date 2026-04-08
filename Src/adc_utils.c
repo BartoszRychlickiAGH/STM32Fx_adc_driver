@@ -22,6 +22,9 @@
 /* Exported variables ------------------------------------------------------------------------------------ */
 extern ADC_HandleTypeDef hadc1;
 
+// Definition of array, which stores continuous ranks offsets in SQRx regs
+
+
 /* Functions' bodies ------------------------------------------------------------------------------------ */
 
 inline uint8_t ADC_GetMode(ADC_HandleTypeDef* hadc){
@@ -36,6 +39,10 @@ inline uint8_t ADC_GetMode(ADC_HandleTypeDef* hadc){
 
 		// returning CR1 dual mode data value to local variable
         return (uint8_t)(hadc->Instance->CR1 >> ADC_CR1_DUALMOD_Pos);
+
+    #elif defined(STM32F3_FAMILY)
+
+        return (((ADC12_COMMON)->CCR >> ADC_CCR_DUAL_Pos)& 0x1F);
 
 	#endif
 
@@ -76,6 +83,10 @@ inline uint8_t ADC_Discontinuous(ADC_HandleTypeDef* hadc){
 	    // returning CR2 continuous conversion data value to local variable
 	    return (uint8_t)((hadc1.Instance->CR1 >> ADC_CR1_DISCEN_Pos) & 0x1);
 
+    #elif defined(STM32F3_FAMILY)
+
+	    return (((hadc->Instance->CFGR >> ADC_CFGR_DISCEN_Pos) & 0x1) ? ENABLE : DISABLE);
+
 	#endif
 
 	// returning incorrect value if target was not detected
@@ -91,8 +102,8 @@ inline uint8_t ADC_DMA_ENABLED(ADC_HandleTypeDef* hadc){
 		return 0xFF;
 	}
 
-    #if defined(STM32F1_FAMILY)
-        return (hadc1.DMA_Handle == NULL) ? DISABLE : ENABLE;
+    #if defined(STM32F1_FAMILY) || defined(STM32F3_FAMILY)
+        return (hadc->DMA_Handle == NULL) ? DISABLE : ENABLE;
     #endif
 
     // error state
@@ -111,6 +122,12 @@ inline uint16_t ADC_Resolution(ADC_HandleTypeDef* hadc){
 
        // because F1 MCUs does not have settings to change their resolution, they have constant value 4095 of resolution
        return (4095);
+   #elif defined(STM32F3_FAMILY)
+
+       uint8_t res = (uint16_t)((hadc->Instance->CFGR >> ADC_CFGR_RES_Pos) & ADC_CFGR_RES_Msk);
+
+       return ((res == 0x0) ? 4095 : ((res == 0x1) ? 1023 : ((res == 0x2) ? 255 : 63)));
+
 
    #endif
 

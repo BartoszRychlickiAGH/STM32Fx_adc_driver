@@ -27,18 +27,31 @@
 
 
 /* Macros -------------------------------------------------------------------------------------------------- */
-#define ADC_MAX_RANKS_NUMBER (16)           //< Maximum number of ADC ranks
-#define ADC_SQR3_2_OFFSET    (6)            //< Offset in reading SQR2 reg of ADC - used in shifting bits while reading ranks 7 - 12, cause for loop would trigger end of bound error
-#define ADC_SQR3_1_OFFSET    (12)           //< Offset in reading SQR1 reg of ADC - used in shifting bits while reading ranks 13 - 16, cause for loop would trigger end of bound error
-#define ADC_SQR_DATA_RES     (5)            //< Resolution of channel number in regs - generally 5 bits of data
-#define ADC_SQR_DATA_Msk     (0x1F)         //< Mask for channel number in regs - generally 4:0 bits of data so 11111
+#define ADC_MAX_RANKS_NUMBER      (16)       //< Maximum number of ADC ranks
 
-#define ADC_POLLING_TIMEOUT  (10)			//< Macro stores max ADC polling timeout, to prevent endless blocking by polling
+#if defined(STM32F1_FAMILY)
+    #define ADC_SQR3_2_OFFSET     (6)        //< Offset in reading SQR3 reg of ADC - used in shifting bits while reading ranks 1 - 6, cause for loop would trigger end of bound error
+    #define ADC_SQR3_1_OFFSET     (12)       //< Offset in reading SQR2 reg of ADC - used in shifting bits while reading ranks 7 - 12, cause for loop would trigger end of bound error
+    #define ADC_SQR_DATA_RES      (5)        //< Resolution of channel number in regs - generally 5 bits of data
 
-#define STM32_VCC            (3.3f)			//< STM32 supply voltage for reading ADC's pins' voltages
-#define STM32_GND            (0.0f)         //< STM32 ground voltage for providing reference while reading ADC's pins' voltages
+#elif defined(STM32F3_FAMILY)
+    #define ADC_SQR1_2_OFFSET     (4)        //< Offset in reading SQR1 reg of ADC - used in shifting bits while reading ranks 1 - 4, cause for loop would trigger end of bound error
+    #define ADC_SQR1_3_OFFSET     (9)        //< Offset in reading SQR3 reg of ADC - used in shifting bits while reading ranks 5 - 9, cause for loop would trigger end of bound error
+    #define ADC_SQR1_4_OFFSET     (14)       //< Offset in reading SQR3 reg of ADC - used in shifting bits while reading ranks 10 - 14, cause for loop would trigger end of bound error
+    #define ADC_SQR_DATA_RES      (6)        //< Resolution of channel number in regs - generally 5 bits of data
+    #define ADC_SQR1_L_OFFSET     (1)        //< Offset in reading SQR1 reg of ADC, because on first bits of SQR1 L data is stored
+    #define ADC_CFGR_RES_Msk      (0x3)      //< Data resolution of stored ADC's resolution param
+#endif
 
-#define ADC_CONVERTED_MEASURES (1)  		//< Macro defines amount of measures, that will be used to average value converted by ADC on exact channel
+#define ADC_SQR_DATA_Msk          (0x1F)     //< Mask for channel number in regs - generally 4:0 bits of data so 11111
+#define ADC_SQR_L_DATA_res        (0xF)
+
+#define ADC_POLLING_TIMEOUT       (10)       //< Macro stores max ADC polling timeout, to prevent endless blocking by polling
+
+#define STM32_VCC                 (3.3f)	   //< STM32 supply voltage for reading ADC's pins' voltages
+#define STM32_GND                 (0.0f)     //< STM32 ground voltage for providing reference while reading ADC's pins' voltages
+
+#define ADC_CONVERTED_MEASURES   (1)  		//< Macro defines amount of measures, that will be used to average value converted by ADC on exact channel
 
 
 /* Exported variables --------------------------------------------------------------------------------------- */
