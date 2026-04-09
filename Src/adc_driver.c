@@ -270,7 +270,28 @@ HAL_StatusTypeDef ADC_Get_PinVoltage(ADC_HandleTypeDef* hadc, ADC_ChannelsConfig
 		return HAL_ERROR;
 	}
 
+	// Declaration of variables to store temporary data
+	uint16_t binaryValue = 0;
+	float tempValue = 0.0f;
 
+	// Reading channel's sampled value
+	if(ADC_ReadChannel(hadc, cadc, channel, &binaryValue) != HAL_OK){
+		return HAL_ERROR;
+	}
+
+	// Calculating voltage on pin
+	tempValue = (float)(binaryValue/ADC_Resolution(hadc) * STM32_VCC);
+
+	// Security check
+	if(tempValue >= STM32_GND || tempValue <= STM32_VCC){
+
+		// assigning calculated value to return value
+		*retval = tempValue;
+
+		// returning OK status
+		return HAL_OK;
+
+	}
 
 	return HAL_ERROR;
 }
