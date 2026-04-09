@@ -59,6 +59,10 @@ static HAL_StatusTypeDef ADC_ReadChannel_NoDMA_Independent(ADC_HandleTypeDef* ha
             	// assigning to end value of sampled ADC value
             	endValue = tempValue;
             }
+    	}else{
+
+    		// if polling crashes then return error status
+    		return HAL_ERROR;
     	}
 
     }
@@ -273,12 +277,6 @@ HAL_StatusTypeDef ADC_Get_PinVoltage(ADC_HandleTypeDef* hadc, ADC_ChannelsConfig
 
 
 HAL_StatusTypeDef ADC_Get_ChannelRank(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTypeDefs* cadc, uint8_t channel, uint8_t* rank){
-
-	// checking if user gave NULL pointers
-	if(NULL == rank){
-	    	return HAL_ERROR;
-
-	}
 
 	// iterating through table of channels in cadc
 	for(uint8_t i = 0; i < cadc->numberOfSelectedChannels; ++i){
