@@ -40,7 +40,7 @@ The project architecture is divided into modules to ensure a transparent flow an
 
 ### 📂 Tests (Quality Assurance)
 
-- **Src/adc_ut.c**: Unit testing modules. Currently, these contain on-target **static tests**. In the final phase of implementation, they will be expanded into **diagnostic functions** to confirm on-target operational correctness.
+- **adc_ut.c**: Unit testing modules. Currently, these contain on-target **static tests**. In the final phase of implementation, they will be expanded into **diagnostic functions** to confirm on-target operational correctness.
 
 ---
 
