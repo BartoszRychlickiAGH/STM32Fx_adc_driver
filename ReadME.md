@@ -46,11 +46,25 @@ The project architecture is divided into modules to ensure a transparent flow an
 
 ## Application
 
-In `.ioc` file, in section for `ADC`, please make sure that `DISCONTINUOUS` flag is set to `ENABLED`. Also ensure that `Number of DIscontinuous Conversion` is set to `1`.
-While working wwith multiple channels, ensures correct `Number of Conversion`, which value should be equal to currently set channels. `.ioc file` whill automatically increase `number of ranks` - make sure, that every rank is assigned to `different channel`.
+### Mode I: Manual/Non-DMA (Discontinuous Mode)
+Use this mode when you want full software control over each conversion.
+* **Discontinuous Conversion Mode**: Set to `Enabled`.
+* **Number of Discontinuous Conversions**: Set to `1`.
+* **Scan Conversion Mode**: Must be `Enabled`.
+* **Number of Conversions**: Must be equal to the number of active channels.
+* **Rank Configuration**: Each rank must be assigned to a **different channel**.
 
-To ensure stable operation and prevent `HardFault` errors, please call the **Init** function before working with the ADC.
-
+### Mode II: Automatic/DMA (Continuous Mode)
+Use this mode for high-speed, background data collection without CPU intervention.
+* **Continuous Conversion Mode**: Set to `Enabled`.
+* **Discontinuous Conversion Mode**: Set to `Disabled`.
+* **DMA Settings**:
+    1. Go to the **DMA Settings** tab (or GPDMA for H5 series).
+    2. Add a new DMA request for the specific ADC instance.
+    3. Configure the DMA mode as `Circular` to ensure continuous data flow into the memory buffer.
+    4. Ensure **Data Width** (Half Word/Word) matches your ADC resolution.
+* **Scan Conversion Mode**: Must be `Enabled`.
+* **Number of Conversions**: Must be equal to the number of active channels.
 ## Manual
 
 _The detailed manual will be expanded as development progresses._
