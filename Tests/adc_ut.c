@@ -35,7 +35,7 @@ ADC_ChannelsConfigTypeDefs ut_cadc;
 
 
 /*
-                      ##### General ADC Driver functionalities Tests #####
+			  ##### General ADC Driver functionalities Tests #####
   ==============================================================================
 */
 
@@ -98,8 +98,11 @@ void TEST_ADCDriver_ChannelsConfiguration(void){
 
 	#endif
 }
+
+
+
 /*
-                      ##### ADC Driver's No DMA Support Conversion tests - ADC in independent mode#####
+ ##### ADC Driver's No DMA Support Conversion tests - ADC in independent mode#####
   ==============================================================================
 
 */
@@ -212,6 +215,27 @@ void TEST_ADC_ReadChannel_4_NoDMA_Independent_Continuous(void){
 }
 
 /*
+  ##### ADC Driver'sDMA Support Conversion tests - ADC in independent mode#####
+  ==============================================================================
+
+*/
+void TEST_ADC_Init_DMA_Independent(void){
+
+	// checking if DMA is enabled
+
+	// checking if Continuous is enabled
+
+	// checking if ADC mode is independent
+
+	// checking if Discontinuous is disabled
+
+
+}
+
+
+
+
+/*
                       ##### ADC Driver's Unit Tests entry point #####
   ==============================================================================
 
@@ -219,8 +243,9 @@ void TEST_ADC_ReadChannel_4_NoDMA_Independent_Continuous(void){
 void ADCDriver_Ut_main(void){
 
 	// initialize CUnit test suit
-	CU_pSuite generalSuite; 		 // init tests suite for Continuous = DISABLED, No DMA, Discontinuous = DISBLED, Independent
+	CU_pSuite generalSuite; 		 // init tests suite for Continuous = DISABLED, No DMA, Discontinuous = DISABLED, Independent
     CU_pSuite noDMASuite;            // test suite for ADC without DMA, independent
+    CU_pSuite DMASuite;              // test suite for ADC with DMA, independent
 
 	// Creating tests db
 	CU_initialize_registry();
@@ -233,6 +258,9 @@ void ADCDriver_Ut_main(void){
 	generalSuite = CU_add_suite("ADC Common Init Test Suite", NULL, NULL);
 	CU_add_test(generalSuite, "Channels Config Test", TEST_ADCDriver_ChannelsConfiguration);
 
+
+	if(ADC_DMA_ENABLED(&hadc1)){
+
 	/*
 	 * Tests for ADC Driver functionalities in No DMA support - independent mode of ADC, Conversion is not Continuous
 	 */
@@ -242,6 +270,17 @@ void ADCDriver_Ut_main(void){
      CU_add_test(noDMASuite, "Reading channel 1 test", TEST_ADC_ReadChannel_1_NoDMA_Independent_Continuous);
      CU_add_test(noDMASuite, "Reading channel 4 test", TEST_ADC_ReadChannel_4_NoDMA_Independent_Continuous);
 
+
+
+	}else{
+	/*
+	 * Tests for ADC Driver functionalities in  DMA support - independent mode of ADC, Conversion is not Continuous
+	 */
+    DMASuite = CU_add_suite("Test Suite for ADC Driver's APi functions while DMA is in use", NULL, NULL);
+
+
+
+	}
 
 
 	// Set verbose mode
