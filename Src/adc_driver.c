@@ -358,7 +358,7 @@ static HAL_StatusTypeDef ADC_ChannelsConfig(ADC_HandleTypeDef* hadc, ADC_Channel
 HAL_StatusTypeDef ADC_Init(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTypeDefs* cadc, ADC_BufferTypeDef* badc){
 
 	// checking if user passed null pointer to ADC handle or cadc structure
-	if(NULL == hadc || NULL == cadc || NULL){
+	if(NULL == hadc || NULL == cadc){
 		return HAL_ERROR;
 	}
 
