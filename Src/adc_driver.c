@@ -38,10 +38,10 @@ static HAL_StatusTypeDef ADC_Init_NoDMA_Independent(ADC_HandleTypeDef* hadc){
 /*
  * @brief Private function that Initialize ADC with DMA support
  */
-static HAL_StatusTypeDef ADC_Init_DMA(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTypeDefs* cadc, ADC_BufferTypeDef* badc){
+static HAL_StatusTypeDef ADC_Init_DMA(ADC_HandleTypeDef* hadc, ADC_BufferTypeDef* badc){
 
 	// security check
-	if(NULL == hadc || NULL == cadc || NULL == badc || NULL == hadc->DMA_Handle){
+	if(NULL == hadc || NULL == badc || NULL == hadc->DMA_Handle){
 		return HAL_ERROR;
 	}
 
@@ -358,7 +358,7 @@ static HAL_StatusTypeDef ADC_ChannelsConfig(ADC_HandleTypeDef* hadc, ADC_Channel
 HAL_StatusTypeDef ADC_Init(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTypeDefs* cadc, ADC_BufferTypeDef* badc){
 
 	// checking if user passed null pointer to ADC handle or cadc structure
-	if(NULL == hadc || NULL == cadc){
+	if(NULL == hadc || NULL == cadc || NULL){
 		return HAL_ERROR;
 	}
 
@@ -382,7 +382,7 @@ HAL_StatusTypeDef ADC_Init(ADC_HandleTypeDef* hadc, ADC_ChannelsConfigTypeDefs* 
 			return HAL_ERROR;
 		}
 	}else{
-		if(ADC_Init_DMA(hadc, cadc, badc) != HAL_OK){
+		if(ADC_Init_DMA(hadc, badc) != HAL_OK){
 			return HAL_ERROR;
 		}
 	}
